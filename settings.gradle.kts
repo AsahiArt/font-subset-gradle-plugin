@@ -8,7 +8,6 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        google()
     }
 }
 
@@ -25,7 +24,7 @@ develocity {
     }
 }
 
-rootProject.name = "kotlin-gradle-plugin-template"
+rootProject.name = "font-subset-gradle-plugin"
 
 include(":example")
 includeBuild("plugin-build")

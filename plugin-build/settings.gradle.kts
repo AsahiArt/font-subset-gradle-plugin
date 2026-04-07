@@ -7,7 +7,6 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        google()
         mavenCentral()
     }
 
@@ -31,6 +30,6 @@ develocity {
     }
 }
 
-rootProject.name = ("com.ncorti.kotlin.gradle.template")
+rootProject.name = "asahiart.fontsubset"
 
 include(":plugin")

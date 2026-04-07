@@ -1,8 +1,8 @@
 plugins {
     java
-    id("com.ncorti.kotlin.gradle.template.plugin")
+    id("asahiart.fontsubset")
 }
 
-templateExampleConfig {
-    message.set("Just trying this gradle plugin...")
+fontSubset {
+    // Smoke-test project for composite-build plugin resolution.
 }
