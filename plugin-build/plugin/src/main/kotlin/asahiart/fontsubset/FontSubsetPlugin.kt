@@ -30,14 +30,15 @@ class FontSubsetPlugin : Plugin<Project> {
                     val configFile = project.file(extension.configFile)
                     if (configFile.exists()) {
                         @Suppress("UNCHECKED_CAST")
-                        val entries = JsonSlurper().parse(configFile) as List<Map<String, String>>
+                        val entries = JsonSlurper().parse(configFile) as List<Map<String, Any?>>
                         entries.forEach { entry ->
                             allConfigs +=
                                 project.objects.newInstance(FontConfig::class.java).apply {
-                                    source = entry["source"].orEmpty()
-                                    output = entry["output"].orEmpty()
-                                    characters = entry["characters"].orEmpty()
-                                    charactersFile = entry["charactersFile"].orEmpty()
+                                    source = entry["source"]?.toString().orEmpty()
+                                    output = entry["output"]?.toString().orEmpty()
+                                    characters = entry["characters"]?.toString().orEmpty()
+                                    charactersFile = entry["charactersFile"]?.toString().orEmpty()
+                                    subset = entry["subset"] as? Boolean ?: true
                                 }
                         }
                         configFile

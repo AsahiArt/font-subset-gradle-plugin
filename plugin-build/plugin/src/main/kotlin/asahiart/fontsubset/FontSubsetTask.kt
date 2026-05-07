@@ -66,14 +66,15 @@ abstract class FontSubsetTask
                         val file = configFile.get().asFile
                         if (file.exists()) {
                             @Suppress("UNCHECKED_CAST")
-                            val entries = JsonSlurper().parse(file) as List<Map<String, String>>
+                            val entries = JsonSlurper().parse(file) as List<Map<String, Any?>>
                             entries.forEach { entry ->
                                 add(
                                     objects.newInstance(FontConfig::class.java).apply {
-                                        source = entry["source"].orEmpty()
-                                        output = entry["output"].orEmpty()
-                                        characters = entry["characters"].orEmpty()
-                                        charactersFile = entry["charactersFile"].orEmpty()
+                                        source = entry["source"]?.toString().orEmpty()
+                                        output = entry["output"]?.toString().orEmpty()
+                                        characters = entry["characters"]?.toString().orEmpty()
+                                        charactersFile = entry["charactersFile"]?.toString().orEmpty()
+                                        subset = entry["subset"] as? Boolean ?: true
                                     },
                                 )
                             }
@@ -112,6 +113,17 @@ abstract class FontSubsetTask
             }
 
             val outputFile = File(root, config.output)
+
+            // If subsetting is disabled, just copy source → output as-is.
+            if (!config.subset) {
+                outputFile.parentFile?.mkdirs()
+                sourceFile.copyTo(outputFile, overwrite = true)
+                val kb = sourceFile.length() / 1024
+                logger.lifecycle(
+                    "FontSubset: ↷ ${sourceFile.name} (subset=false, copied as-is, ${kb}KB) → ${outputFile.name}",
+                )
+                return false
+            }
 
             val charsBuf = StringBuilder()
             if (config.characters.isNotBlank()) {

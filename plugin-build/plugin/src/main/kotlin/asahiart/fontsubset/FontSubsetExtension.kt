@@ -78,4 +78,13 @@ abstract class FontConfig {
      */
     @get:Input
     var charactersFile: String = ""
+
+    /**
+     * Whether to perform subsetting for this font.
+     * When `false`, the source font file is copied to the output path as-is,
+     * without stripping any glyphs. Useful for fonts that must remain full
+     * (e.g. when the character set is dynamic at runtime).
+     */
+    @get:Input
+    var subset: Boolean = true
 }
