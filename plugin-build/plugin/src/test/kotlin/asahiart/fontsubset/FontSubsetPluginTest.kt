@@ -10,7 +10,7 @@ class FontSubsetPluginTest {
     fun `plugin registers task and extension`() {
         val project = ProjectBuilder.builder().build()
 
-        project.pluginManager.apply("asahiart.fontsubset")
+        project.pluginManager.apply("io.github.asahiart.fontsubset")
 
         assertTrue(project.tasks.getByName("subsetFonts") is FontSubsetTask)
         assertNotNull(project.extensions.getByName("fontSubset"))

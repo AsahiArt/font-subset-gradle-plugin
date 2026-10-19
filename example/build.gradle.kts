@@ -1,6 +1,6 @@
 plugins {
     java
-    id("asahiart.fontsubset")
+    id("io.github.asahiart.fontsubset")
 }
 
 fontSubset {

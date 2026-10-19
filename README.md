@@ -3,7 +3,7 @@
 [![Pre Merge Checks](https://github.com/AsahiArt/font-subset-gradle-plugin/actions/workflows/pre-merge.yaml/badge.svg)](https://github.com/AsahiArt/font-subset-gradle-plugin/actions/workflows/pre-merge.yaml)
 [![Publish Plugin to Portal](https://github.com/AsahiArt/font-subset-gradle-plugin/actions/workflows/publish-plugin.yaml/badge.svg)](https://github.com/AsahiArt/font-subset-gradle-plugin/actions/workflows/publish-plugin.yaml)
 
-`asahiart.fontsubset` is a Gradle plugin for subsetting TTF and OTF font files down to the Unicode code points your app actually needs.
+`io.github.asahiart.fontsubset` is a Gradle plugin for subsetting TTF and OTF font files down to the Unicode code points your app actually needs.
 
 It supports:
 
@@ -17,7 +17,7 @@ It supports:
 
 ```kotlin
 plugins {
-    id("asahiart.fontsubset") version "1.0.0"
+    id("io.github.asahiart.fontsubset") version "1.0.0"
 }
 
 fontSubset {
