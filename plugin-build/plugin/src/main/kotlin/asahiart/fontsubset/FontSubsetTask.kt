@@ -75,6 +75,7 @@ abstract class FontSubsetTask
                                         characters = entry["characters"]?.toString().orEmpty()
                                         charactersFile = entry["charactersFile"]?.toString().orEmpty()
                                         subset = entry["subset"] as? Boolean ?: true
+                                        dropGlyphNames = entry["dropGlyphNames"] as? Boolean ?: false
                                     },
                                 )
                             }
@@ -154,7 +155,7 @@ abstract class FontSubsetTask
             )
 
             val fontBytes = sourceFile.readBytes()
-            val subsetBytes = subsetter.subset(fontBytes, codepoints)
+            val subsetBytes = subsetter.subset(fontBytes, codepoints, config.dropGlyphNames)
 
             outputFile.parentFile?.mkdirs()
             outputFile.writeBytes(subsetBytes)

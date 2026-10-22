@@ -10,6 +10,7 @@ It supports:
 - TrueType (`glyf`/`loca`) and OpenType CFF/CFF2 fonts
 - `cmap` format 4 and 12
 - Inline character lists and external character files
+- Optional `dropGlyphNames`, writing `post` as version 3.0 without glyph names
 - JSON-based batch configuration
 - Composite builds for local plugin development
 
@@ -17,7 +18,7 @@ It supports:
 
 ```kotlin
 plugins {
-    id("io.github.asahiart.fontsubset") version "1.0.0"
+    id("io.github.asahiart.fontsubset") version "1.0.1"
 }
 
 fontSubset {
@@ -25,6 +26,9 @@ fontSubset {
         source = "src/main/assets/fonts/SourceHanSansSC-Regular.otf"
         output = "src/main/assets/fonts/SourceHanSansSC-Regular-subset.otf"
         characters = "你好世界Hello"
+        // Omit glyph names: `post` becomes version 3.0 (32-byte header).
+        // Same idea as pyftsubset `--no-glyph-names`. Default false keeps 1.0.0 behavior.
+        dropGlyphNames = true
     }
 
     font {
@@ -54,7 +58,8 @@ The plugin registers a `subsetFonts` task and automatically wires it into common
   {
     "source": "src/main/assets/fonts/SourceHanSansSC-Regular.otf",
     "output": "src/main/assets/fonts/SourceHanSansSC-Regular-subset.otf",
-    "characters": "你好世界Hello"
+    "characters": "你好世界Hello",
+    "dropGlyphNames": true
   },
   {
     "source": "src/main/assets/fonts/Inter-Regular.ttf",
@@ -78,6 +83,7 @@ The plugin registers a `subsetFonts` task and automatically wires it into common
 | `characters`     | String  | `""`    | Inline characters to keep. All unique Unicode code points in the string are included.            |
 | `charactersFile` | String  | `""`    | Path to a plain-text file whose content supplies additional characters to keep.                  |
 | `subset`         | Boolean | `true`  | When `false`, the source font is copied to `output` as-is, without stripping glyphs.             |
+| `dropGlyphNames` | Boolean | `false` | When `true`, write `post` as version 3.0 (32 bytes, no glyph names). Header fields such as `italicAngle`, `underlinePosition`, `underlineThickness`, and `isFixedPitch` are copied from the source table. `false` leaves `post` unchanged, matching 1.0.0. Ignored when `subset` is `false`. Glyph selection, `cmap`, `maxp`, and `hmtx` do not use `post` glyph names. |
 
 ## Development
 
