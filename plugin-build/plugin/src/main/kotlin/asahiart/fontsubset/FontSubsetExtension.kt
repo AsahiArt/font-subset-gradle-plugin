@@ -18,6 +18,7 @@ import javax.inject.Inject
  *         source = "src/main/assets/fonts/MyFont.ttf"
  *         output = "src/main/assets/fonts/MyFont-subset.ttf"
  *         characters = "你好世界Hello"
+ *         dropGlyphNames = true // post format 3, no glyph names
  *     }
  *     font {
  *         source = "src/main/assets/fonts/Another.ttf"
@@ -87,4 +88,15 @@ abstract class FontConfig {
      */
     @get:Input
     var subset: Boolean = true
+
+    /**
+     * When `true`, the subset `post` table is written as version 3.0: a 32-byte
+     * header and no glyph names. Italic angle, underline metrics, and the other
+     * header fields are copied from the source `post` table.
+     *
+     * Default `false` keeps the source `post` table unchanged (1.0.0 behavior).
+     * Ignored when [subset] is `false`.
+     */
+    @get:Input
+    var dropGlyphNames: Boolean = false
 }

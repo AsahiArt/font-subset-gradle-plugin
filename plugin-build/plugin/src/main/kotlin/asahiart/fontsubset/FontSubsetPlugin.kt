@@ -39,6 +39,7 @@ class FontSubsetPlugin : Plugin<Project> {
                                     characters = entry["characters"]?.toString().orEmpty()
                                     charactersFile = entry["charactersFile"]?.toString().orEmpty()
                                     subset = entry["subset"] as? Boolean ?: true
+                                    dropGlyphNames = entry["dropGlyphNames"] as? Boolean ?: false
                                 }
                         }
                         configFile

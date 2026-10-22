@@ -23,10 +23,13 @@ import java.nio.ByteOrder
  *  - Simple and composite TTF glyphs (dependency resolution)
  *  - Required tables: head, hhea, maxp, cmap, hmtx
  *  - Pass-through tables: OS/2, name, post, kern, GSUB, GPOS, GDEF, …
+ *    `post` stays verbatim unless [subset] is called with `dropGlyphNames`.
  */
 class TtfSubsetter {
     companion object {
         private const val SFVERSION_OTTO = 0x4F54544F // "OTTO"
+        private const val POST_HEADER_SIZE = 32
+        private const val POST_VERSION_3 = 0x00030000
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -41,11 +44,14 @@ class TtfSubsetter {
      *
      * @param fontBytes Raw bytes of a TTF or OTF file.
      * @param codepoints Unicode codepoints to keep (as Int, e.g. 0x4E2D for '中').
+     * @param dropGlyphNames When true, rewrite `post` as version 3.0 (no glyph names).
+     * Default false keeps the source `post` table byte for byte.
      * @return Raw bytes of the subsetted font.
      */
     fun subset(
         fontBytes: ByteArray,
         codepoints: Set<Int>,
+        dropGlyphNames: Boolean = false,
     ): ByteArray {
         require(fontBytes.size >= 12) { "Not a valid font file (too small)" }
 
@@ -56,9 +62,9 @@ class TtfSubsetter {
         val tables = parseTables(buf, numTables)
 
         return if (sfVersion == SFVERSION_OTTO) {
-            subsetOtf(buf, sfVersion, tables, codepoints)
+            subsetOtf(buf, sfVersion, tables, codepoints, dropGlyphNames)
         } else {
-            subsetTtf(buf, sfVersion, tables, codepoints)
+            subsetTtf(buf, sfVersion, tables, codepoints, dropGlyphNames)
         }
     }
 
@@ -71,6 +77,7 @@ class TtfSubsetter {
         sfVersion: Int,
         tables: Map<String, TableRecord>,
         codepoints: Set<Int>,
+        dropGlyphNames: Boolean,
     ): ByteArray {
         // ── head ──────────────────────────────────────────────────────────────
         val headRec = tables["head"] ?: error("Missing 'head' table")
@@ -132,7 +139,6 @@ class TtfSubsetter {
             listOf(
                 "OS/2",
                 "name",
-                "post",
                 "kern",
                 "cvt ",
                 "fpgm",
@@ -149,6 +155,7 @@ class TtfSubsetter {
                 allTables[tag] = readTable(buf, rec)
             }
         }
+        putPost(allTables, buf, tables, dropGlyphNames)
 
         return assembleFont(sfVersion, allTables)
     }
@@ -162,6 +169,7 @@ class TtfSubsetter {
         sfVersion: Int,
         tables: Map<String, TableRecord>,
         codepoints: Set<Int>,
+        dropGlyphNames: Boolean,
     ): ByteArray {
         // ── maxp ──────────────────────────────────────────────────────────────
         val maxpRec = tables["maxp"] ?: error("Missing 'maxp' table")
@@ -221,7 +229,7 @@ class TtfSubsetter {
         // Pass-through tables for OTF (no glyf/loca/cvt/fpgm/prep)
         val passthroughTags =
             buildList {
-                addAll(listOf("OS/2", "name", "post", "kern"))
+                addAll(listOf("OS/2", "name", "kern"))
                 // NOTE: GSUB/GPOS/GDEF are intentionally excluded from subsets:
                 // Subsetting retains only a handful of glyphs, and all lookup
                 // tables in GSUB/GPOS still reference the original full glyph set.
@@ -245,6 +253,7 @@ class TtfSubsetter {
                 allTables[tag] = readTable(buf, rec)
             }
         }
+        putPost(allTables, buf, tables, dropGlyphNames)
 
         return assembleFont(sfVersion, allTables)
     }
@@ -641,6 +650,44 @@ class TtfSubsetter {
         bb.putShort(50, locaFormat.toShort()) // indexToLocFormat
         bb.putInt(8, 0) // zero checkSumAdjustment — recalculated in assembleFont
         return data
+    }
+
+    /**
+     * `post` glyph names are not consulted for cmap rebuild or glyph renumbering.
+     * Those use cmap code points and glyf component ids. CFF charset SIDs come
+     * from the CFF table, not from `post`. Dropping names leaves glyph choice,
+     * cmap contents, and outline bytes alone. The file still changes wherever
+     * a smaller `post` moves table offsets, plus `head.checkSumAdjustment`.
+     *
+     * Version 3.0 is the 32-byte header: the version field is set to 3.0 and
+     * italicAngle, underlinePosition, underlineThickness, isFixedPitch, and the
+     * four memory fields are copied from the source header.
+     */
+    private fun putPost(
+        allTables: MutableMap<String, ByteArray>,
+        buf: ByteBuffer,
+        tables: Map<String, TableRecord>,
+        dropGlyphNames: Boolean,
+    ) {
+        val rec = tables["post"] ?: return
+        allTables["post"] = buildPost(buf, rec, dropGlyphNames)
+    }
+
+    private fun buildPost(
+        buf: ByteBuffer,
+        rec: TableRecord,
+        dropGlyphNames: Boolean,
+    ): ByteArray {
+        val original = readTable(buf, rec)
+        if (!dropGlyphNames) {
+            return original
+        }
+        require(original.size >= POST_HEADER_SIZE) {
+            "post table is ${original.size} bytes; format 3 needs $POST_HEADER_SIZE"
+        }
+        val header = original.copyOf(POST_HEADER_SIZE)
+        ByteBuffer.wrap(header).order(ByteOrder.BIG_ENDIAN).putInt(0, POST_VERSION_3)
+        return header
     }
 
     private fun buildHhea(
